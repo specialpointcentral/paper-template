@@ -13,7 +13,7 @@ jobs:
   build_release_latex:
     runs-on: ubuntu-22.04
     env:
-      MAINFILE: thesis
+      MAINFILE: paper
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,10 +29,15 @@ jobs:
           format: pdf
           crop: true
 
+      - name: Build AI pictures
+        run: |
+          sudo apt-get update && sudo apt-get install -y ghostscript
+          make aipics
+
       - name: Build matplotlib
         run: |
           sudo apt-get update && sudo apt-get install -y python3-venv
-          cd python && bash run.sh && cd ..
+          make python
 
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@3.2.0

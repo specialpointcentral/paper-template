@@ -10,9 +10,11 @@ OBJECTS = $(wildcard *.tex body/*.tex)
 STYLES = $(wildcard *.sty)
 BIB = $(wildcard *.bib)
 DRAWS = $(wildcard drawio/*.drawio)
+AIPS = $(wildcard ai/*.ai)
 
 EXTRA_FILES := $(wildcard images/*)
 DRAWS_FILES := $(addsuffix .drawpic, $(basename $(DRAWS)))
+AIPS_FILES := $(addsuffix .aipic, $(basename $(AIPS)))
 
 OBJECTS_TEST = $(addsuffix .t, $(basename $(OBJECTS)))
 STYLES_TEST = $(addsuffix .s, $(basename $(STYLES)))
@@ -23,9 +25,11 @@ TEMP2 := $(shell mkdir -p make/body 2>/dev/null)
 LATEX 	?= xelatex
 BIBTEX 	?= bibtex
 DRAWIO  ?= drawio
+GS      ?= gs
 
 LATEX_FLAGS = -synctex=1 -shell-escape -interaction=nonstopmode -file-line-error
 DRAWIO_FLAGS = -f pdf -x --crop
+AIGS_FLAGS = -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sFONTPATH=fonts
 
 # Detect OS for opening pdf
 ifeq ($(OS),Windows_NT)
@@ -43,11 +47,11 @@ endif
 all: $(MAINFILE).dvi $(MAINFILE).pdf
 	$(OPEN_PDF) $(MAINFILE).pdf
 
-$(MAINFILE).dvi: $(DRAWS_FILES) $(TESTS) $(EXTRA_FILES)
+$(MAINFILE).dvi: $(DRAWS_FILES) $(AIPS_FILES) $(TESTS) $(EXTRA_FILES)
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 
-$(MAINFILE).pdf: $(DRAWS_FILES) $(TESTS) $(EXTRA_FILES)
+$(MAINFILE).pdf: $(DRAWS_FILES) $(AIPS_FILES) $(TESTS) $(EXTRA_FILES)
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 	
@@ -66,9 +70,16 @@ make/bib: $(BIB)
 	$(DRAWIO) $(DRAWIO_FLAGS) $< -o $@
 	cp $@ $(addsuffix .pdf, $(basename $<))
 
-.PHONY: python
+%.aipic: %.ai
+	# gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=out.pdf overview.ai
+	$(GS) $(AIGS_FLAGS) -sOutputFile=$@ $<
+	cp $@ $(addsuffix .pdf, $(basename $<))
+
+.PHONY: python aipics
 python:
 	@cd python && bash run.sh
+
+aipics: $(AIPS_FILES)
 
 .PHONY: clean
 clean:
