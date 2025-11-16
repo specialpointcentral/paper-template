@@ -53,19 +53,22 @@ Also you can use other commands to clean up the intermediate files:
 
 ## Folder structure
 
-### `body`
+| Path | Description |
+| --- | --- |
+| `paper.tex` | Main entry point (IEEEtran template by default). All sections in `body/` are referenced from here via `\\input`. |
+| `body/` | Holds per-section `.tex` files so each chapter can be edited independently. The `Makefile` watches `body/*.tex` so changing a section triggers recompilation. |
+| `style/` | Custom classes/macros such as `IEEEtran.cls`. Place extra `.sty` or `.cls` helpers here and the build system will pick them up automatically. |
+| `images/` | Final figures embedded into the paper. Targets such as `make python`, Draw.io exports, or AI conversions drop generated PDFs/PNGs here to keep sources and outputs separated. |
+| `drawio/` | Source `.drawio` diagrams. CI runs `rlespinasse/drawio-export-action` to crop and export them to PDF before compilation. |
+| `ai/` | Adobe Illustrator (or other vector) sources. `make aipics` (also executed in CI) uses Ghostscript to convert them into PDF copies stored next to the originals. |
+| `fonts/` | Optional font files referenced by AI assets. `make aipics` passes the folder to Ghostscript via `-sFONTPATH` so exported figures stay consistent across machines. |
+| `python/` | Data processing / plotting scripts. `make python` runs `python/run.sh`, which provisioning a `venv`, installs `requirements.txt`, and executes every `*.py` with `quiet` and `savepdf` flags—ideal for reproducible matplotlib figures saved in `images/`. |
+| `ref.bib` | Bibliography managed by BibTeX. Included by the `make/bib` dependency so reference edits trigger a rebuild. |
+| `latexmkrc` | Local latexmk configuration mirroring CI flags for those who prefer `latexmk` over `make`. |
+| `Makefile` | Orchestrates LaTeX compilation, diagram conversion, Python helpers, and cleanup targets (`make`, `make clean`, `make distclean`, `make aipics`, etc.). |
+| `.github/workflows/` | Automation entrypoints. `build-latex.yml` builds diagrams, compiles the PDF, pushes it to `gh_actions_builds`, and optionally publishes releases. |
 
-### `style`
-
-### `images`
-
-### `drawio`
-
-### `ai`
-
-### `python`
-
-### others
+> Tip: keep raw sources (`drawio/`, `ai/`, `python/`) versioned. The GitHub Action regenerates PDFs/figures on every push, so you only need to track the authoritative inputs.
 
 ## Emmm...
 
