@@ -19,8 +19,21 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ghostscript python3-venv
+
+      - name: Cache pip downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('python/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Build drawio
-        uses: rlespinasse/drawio-export-action@v2.35.0
+        uses: rlespinasse/drawio-export-action@v2.38.0
         with:
           action-mode: all
           remove-page-suffix: true
@@ -30,14 +43,10 @@ jobs:
           crop: true
 
       - name: Build AI pictures
-        run: |
-          sudo apt-get update && sudo apt-get install -y ghostscript
-          make aipics
+        run: make aipics
 
       - name: Build matplotlib
-        run: |
-          sudo apt-get update && sudo apt-get install -y python3-venv
-          make python
+        run: make python
 
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@4.0.0
@@ -46,6 +55,13 @@ jobs:
           latexmk_use_xelatex: true
           latexmk_shell_escape: true
           args: "-synctex=1 -interaction=nonstopmode -file-line-error"
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.MAINFILE }}-pdf
+          path: ${{ env.MAINFILE }}.pdf
+          if-no-files-found: error
           
       - name: Stash PDF
         run: |
