@@ -55,6 +55,7 @@ jobs:
           latexmk_use_xelatex: true
           latexmk_shell_escape: true
           args: "-synctex=1 -interaction=nonstopmode -file-line-error"
+          post_compile: "chmod -R 777 ."
 
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
