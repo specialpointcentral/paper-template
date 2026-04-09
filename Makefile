@@ -7,7 +7,8 @@ MAINFILE = $(patsubst %.tex,%,$(MAINTEX))
 
 ## Inner workings
 OBJECTS = $(wildcard *.tex body/*.tex)
-STYLES = $(wildcard *.sty)
+STYLES = $(wildcard style/*.sty)
+CLASSES = $(wildcard style/*.cls)
 BIB = $(wildcard *.bib)
 DRAWS = $(wildcard drawio/*.drawio)
 AIPS = $(wildcard ai/*.ai)
@@ -18,14 +19,17 @@ AIPS_FILES := $(addsuffix .aipic, $(basename $(AIPS)))
 
 OBJECTS_TEST = $(addsuffix .t, $(basename $(OBJECTS)))
 STYLES_TEST = $(addsuffix .s, $(basename $(STYLES)))
+CLASSES_TEST = $(addsuffix .c, $(basename $(CLASSES)))
 BIB_TEST = bib
-TESTS = $(addprefix make/, $(OBJECTS_TEST) $(STYLES_TEST) $(BIB_TEST))
-TEMP2 := $(shell mkdir -p make/body 2>/dev/null)
+TESTS = $(addprefix make/, $(OBJECTS_TEST) $(STYLES_TEST) $(CLASSES_TEST) $(BIB_TEST))
 
 LATEX 	?= xelatex
 BIBTEX 	?= bibtex
 DRAWIO  ?= drawio
 GS      ?= gs
+
+export TEXINPUTS := ./style//:$(TEXINPUTS)
+export BSTINPUTS := ./style//:$(BSTINPUTS)
 
 LATEX_FLAGS = -synctex=1 -shell-escape -interaction=nonstopmode -file-line-error
 DRAWIO_FLAGS = -f pdf -x --crop
@@ -45,7 +49,7 @@ endif
 
 .PHONY: all
 all: $(MAINFILE).dvi $(MAINFILE).pdf
-	$(OPEN_PDF) $(MAINFILE).pdf
+	-$(OPEN_PDF) $(MAINFILE).pdf
 
 $(MAINFILE).dvi: $(DRAWS_FILES) $(AIPS_FILES) $(TESTS) $(EXTRA_FILES)
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
@@ -55,16 +59,24 @@ $(MAINFILE).pdf: $(DRAWS_FILES) $(AIPS_FILES) $(TESTS) $(EXTRA_FILES)
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 	
-make/%.t: %.tex
+.SECONDEXPANSION:
+
+make/%.t: %.tex | $$(@D)/
 	@touch $@
 
-make/%.s: %.sty
+make/%.s: %.sty | $$(@D)/
 	@touch $@
 
-make/bib: $(BIB)
+make/%.c: %.cls | $$(@D)/
+	@touch $@
+
+make/bib: $(BIB) | $$(@D)/
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 	$(BIBTEX) $(MAINFILE)
 	@touch $@
+
+%/:
+	@mkdir -p $@
 
 %.drawpic: %.drawio
 	$(DRAWIO) $(DRAWIO_FLAGS) $< -o $@
