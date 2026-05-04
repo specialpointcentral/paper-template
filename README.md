@@ -25,10 +25,25 @@ If you have struggled with any of these situations:
   - `Branch`: `gh_actions_builds`
   - Note: This branch to be available after completing by `GitHub Action`.
 - Each commit triggers a compilation that generates the latest files (the pdf of paper).
+- After GitHub Pages is enabled, the PDF is usually available at:
+  - `https://<username>.github.io/<repo>/paper.pdf`
+- Push a tag like `v1.0.0` to create a GitHub Release with the compiled PDF attached:
+  - `git tag v1.0.0`
+  - `git push origin v1.0.0`
+
+> Note: The workflow pushes the compiled PDF to the `gh_actions_builds` branch. If Actions only has read permission, the `Push PDF` step will fail.
 
 ## How to build locally
 
 There are two ways to build locally (in linux, macos, or wsl in windows):
+
+Before building, install the basic dependencies:
+
+- `make`
+- `xelatex` and `bibtex` (usually from a TeX Live distribution)
+- `python3-venv` and `pip3` (for Python-generated figures)
+- `ghostscript` (for Adobe Illustrator `.ai` figure conversion)
+- `drawio` (only needed when building local `.drawio` diagrams)
 
 - Use `latexmk` to build locally.
   - `latexmk -xelatex -outdir=build paper.tex`
@@ -55,14 +70,14 @@ Also you can use other commands to clean up the intermediate files:
 
 | Path | Description |
 | --- | --- |
-| `paper.tex` | Main entry point (IEEEtran template by default). All sections in `body/` are referenced from here via `\\input`. |
-| `body/` | Holds per-section `.tex` files so each chapter can be edited independently. The `Makefile` watches `body/*.tex` so changing a section triggers recompilation. |
+| `paper.tex` | Main entry point (IEEEtran template by default). You can write directly in this file or split sections into `body/` and include them with `\\input{body/...}`. |
+| `body/` | Optional folder for per-section `.tex` files so each chapter can be edited independently. The `Makefile` watches `body/*.tex` so changing a section triggers recompilation. |
 | `style/` | Custom classes/macros such as `IEEEtran.cls`. Place extra `.sty` or `.cls` helpers here and the build system will pick them up automatically. |
 | `images/` | Final figures embedded into the paper. Targets such as `make python`, Draw.io exports, or AI conversions drop generated PDFs/PNGs here to keep sources and outputs separated. |
 | `drawio/` | Source `.drawio` diagrams. CI runs `rlespinasse/drawio-export-action` to crop and export them to PDF before compilation. |
 | `ai/` | Adobe Illustrator (or other vector) sources. `make aipics` (also executed in CI) uses Ghostscript to convert them into PDF copies stored next to the originals. |
 | `fonts/` | Optional font files referenced by AI assets. `make aipics` passes the folder to Ghostscript via `-sFONTPATH` so exported figures stay consistent across machines. |
-| `python/` | Data processing / plotting scripts. `make python` runs `python/run.sh`, which provisioning a `venv`, installs `requirements.txt`, and executes every `*.py` with `quiet` and `savepdf` flags—ideal for reproducible matplotlib figures saved in `images/`. |
+| `python/` | Data processing / plotting scripts. `make python` runs `python/run.sh`, which provisions a `venv`, installs `requirements.txt`, and executes every `*.py` with `quiet`, `savepdf`, and `savesvg` flags—ideal for reproducible matplotlib figures saved in `images/`. |
 | `ref.bib` | Bibliography managed by BibTeX. Included by the `make/bib` dependency so reference edits trigger a rebuild. |
 | `latexmkrc` | Local latexmk configuration mirroring CI flags for those who prefer `latexmk` over `make`. |
 | `Makefile` | Orchestrates LaTeX compilation, diagram conversion, Python helpers, and cleanup targets (`make`, `make clean`, `make distclean`, `make aipics`, etc.). |
@@ -70,6 +85,6 @@ Also you can use other commands to clean up the intermediate files:
 
 > Tip: keep raw sources (`drawio/`, `ai/`, `python/`) versioned. The GitHub Action regenerates PDFs/figures on every push, so you only need to track the authoritative inputs.
 
-## Emmm...
+## License
 
-Let's write here first, I'll add more later..
+See [LICENSE](LICENSE).
