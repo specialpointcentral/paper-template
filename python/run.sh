@@ -18,18 +18,29 @@ else
 fi
 
 # run python scripts
-if ls -- *.py 1> /dev/null 2>&1; then
-    for file in *.py
-    do
-        if command -v python3 &>/dev/null; then
-            echo "Running $file..."
-            python3 "$file" quiet savepdf
-        else
-            echo "No python3 interpreter found."
-            exit 1
-        fi
-    done
+if ! command -v python3 &>/dev/null; then
+    echo "No python3 interpreter found."
+    exit 1
 fi
+
+if [ "$#" -gt 0 ]; then
+    files=("$@")
+elif compgen -G "*.py" > /dev/null; then
+    files=(*.py)
+else
+    files=()
+fi
+
+for file in "${files[@]}"
+do
+    if [ ! -f "$file" ]; then
+        echo "Python script not found: $file"
+        exit 1
+    fi
+
+    echo "Running $file..."
+    python3 "$file" quiet savepdf savesvg
+done
 
 # deactivate virtual environment
 deactivate

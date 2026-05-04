@@ -12,10 +12,14 @@ CLASSES = $(wildcard style/*.cls)
 BIB = $(wildcard *.bib)
 DRAWS = $(wildcard drawio/*.drawio)
 AIPS = $(wildcard ai/*.ai)
+PYTHONS = $(wildcard python/*.py)
 
 EXTRA_FILES := $(wildcard images/*)
 DRAWS_FILES := $(addsuffix .drawpic, $(basename $(DRAWS)))
 AIPS_FILES := $(addsuffix .aipic, $(basename $(AIPS)))
+PYTHON_PDFS := $(patsubst python/%.py,images/%.pdf,$(PYTHONS))
+PYTHON_SVGS := $(patsubst python/%.py,images/%.svg,$(PYTHONS))
+PYTHON_FILES := $(PYTHON_PDFS) $(PYTHON_SVGS)
 
 OBJECTS_TEST = $(addsuffix .t, $(basename $(OBJECTS)))
 STYLES_TEST = $(addsuffix .s, $(basename $(STYLES)))
@@ -51,11 +55,11 @@ endif
 all: $(MAINFILE).dvi $(MAINFILE).pdf
 	-$(OPEN_PDF) $(MAINFILE).pdf
 
-$(MAINFILE).dvi: $(DRAWS_FILES) $(AIPS_FILES) $(TESTS) $(EXTRA_FILES)
+$(MAINFILE).dvi: $(DRAWS_FILES) $(AIPS_FILES) $(PYTHON_FILES) $(TESTS) $(EXTRA_FILES)
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 
-$(MAINFILE).pdf: $(DRAWS_FILES) $(AIPS_FILES) $(TESTS) $(EXTRA_FILES)
+$(MAINFILE).pdf: $(DRAWS_FILES) $(AIPS_FILES) $(PYTHON_FILES) $(TESTS) $(EXTRA_FILES)
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 	
@@ -86,6 +90,9 @@ make/bib: $(BIB) | $$(@D)/
 	# gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=out.pdf overview.ai
 	$(GS) $(AIGS_FLAGS) -sOutputFile=$@ $<
 	cp $@ $(addsuffix .pdf, $(basename $<))
+
+images/%.pdf images/%.svg &: python/%.py python/requirements.txt $(wildcard python/*.json) | images/
+	@cd python && bash run.sh $*.py
 
 .PHONY: python aipics
 python:
