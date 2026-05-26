@@ -37,7 +37,15 @@ export BSTINPUTS := ./style//:$(BSTINPUTS)
 
 LATEX_FLAGS = -synctex=1 -shell-escape -interaction=nonstopmode -file-line-error
 DRAWIO_FLAGS = -f pdf -x --crop
-AIGS_FLAGS = -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sFONTPATH=fonts
+AIGS_FLAGS = -dNOPAUSE -dBATCH -sDEVICE=pdfwrite \
+	-dCompatibilityLevel=1.7 \
+	-dAutoRotatePages=/None \
+	-dProcessColorModel=/DeviceRGB \
+	-sColorConversionStrategy=RGB \
+	-dOverrideICC \
+	-dEmbedAllFonts=true \
+	-dSubsetFonts=true \
+	-sFONTPATH=fonts
 
 # Detect OS for opening pdf
 ifeq ($(OS),Windows_NT)
