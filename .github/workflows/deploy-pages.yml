@@ -1,0 +1,41 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [ gh_actions_builds ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout Pages branch
+        uses: actions/checkout@v5
+        with:
+          ref: gh_actions_builds
+          fetch-depth: 1
+          submodules: false
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

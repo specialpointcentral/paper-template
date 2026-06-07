@@ -21,9 +21,8 @@ If you have struggled with any of these situations:
 - Setting up the display page (the pdf of paper).
   - `Setting` > `Pages`
   - Find `Build and deployment`
-  - `Source`: `Deploy from a branch`
-  - `Branch`: `gh_actions_builds`
-  - Note: This branch to be available after completing by `GitHub Action`.
+  - `Source`: `GitHub Actions`
+  - Note: The `gh_actions_builds` branch will be available after the build workflow completes. The Pages deployment workflow publishes that branch without recursively checking out submodules.
 - Each commit triggers a compilation that generates the latest files (the pdf of paper).
 - After GitHub Pages is enabled, the PDF is usually available at:
   - `https://<username>.github.io/<repo>/paper.pdf`
@@ -81,7 +80,7 @@ Also you can use other commands to clean up the intermediate files:
 | `ref.bib` | Bibliography managed by BibTeX. Included by the `make/bib` dependency so reference edits trigger a rebuild. |
 | `latexmkrc` | Local latexmk configuration mirroring CI flags for those who prefer `latexmk` over `make`. |
 | `Makefile` | Orchestrates LaTeX compilation, diagram conversion, Python helpers, and cleanup targets (`make`, `make clean`, `make distclean`, `make aipics`, etc.). |
-| `.github/workflows/` | Automation entrypoints. `build-latex.yml` builds diagrams, compiles the PDF, pushes it to `gh_actions_builds`, and optionally publishes releases. |
+| `.github/workflows/` | Automation entrypoints. `build-latex.yml` builds diagrams, compiles the PDF, pushes it to `gh_actions_builds`, and optionally publishes releases. `deploy-pages.yml` publishes `gh_actions_builds` through GitHub Pages without recursively checking out submodules. |
 
 > Tip: keep raw sources (`drawio/`, `ai/`, `python/`) versioned. The GitHub Action regenerates PDFs/figures on every push, so you only need to track the authoritative inputs.
 
