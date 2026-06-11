@@ -1,8 +1,10 @@
 name: Deploy GitHub Pages
 
 on:
-  push:
-    branches: [ gh_actions_builds ]
+  workflow_run:
+    workflows: ["Build and Release LaTeX document"]
+    types: [completed]
+    branches: [ master ]
   workflow_dispatch:
 
 permissions:
@@ -16,6 +18,13 @@ concurrency:
 
 jobs:
   deploy:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'master'
+      )
     runs-on: ubuntu-22.04
     environment:
       name: github-pages
