@@ -82,12 +82,16 @@ jobs:
           ref: gh_actions_builds
           
       - name: Commit PDF
+        env:
+          COMMITTER_EMAIL: ${{ github.event.head_commit.committer.email || '41898282+github-actions[bot]@users.noreply.github.com' }}
+          COMMITTER_NAME: ${{ github.event.head_commit.committer.name || 'github-actions[bot]' }}
+          SOURCE_COMMIT_MESSAGE: ${{ github.event.head_commit.message || format('Build PDF from {0}', github.sha) }}
         run: |
-          git config --local user.email "${{github.event.head_commit.committer.email}}"
-          git config --local user.name "${{github.event.head_commit.committer.name}}"
-          mv $HOME/${{env.MAINFILE}}.pdf $(pwd) # bring it back 
-          git add -f ${{env.MAINFILE}}.pdf
-          git commit -m "Updated by GitHub Action Automatically" -m "${{github.event.head_commit.message}}" -m "Commit-from: ${{github.sha}}"
+          git config --local user.email "$COMMITTER_EMAIL"
+          git config --local user.name "$COMMITTER_NAME"
+          mv "$HOME/${MAINFILE}.pdf" . # bring it back
+          git add -f "${MAINFILE}.pdf"
+          git commit -m "Updated by GitHub Action Automatically" -m "$SOURCE_COMMIT_MESSAGE" -m "Commit-from: $GITHUB_SHA"
           
       - name: Push PDF
         uses: ad-m/github-push-action@v1.0.0
