@@ -56,39 +56,36 @@ else ifeq ($(shell uname),Darwin)
     OPEN_PDF := open
 else
     # Linux
-    OPEN_PDF := /bin/bash -c xdg-open
+    OPEN_PDF := xdg-open
 endif
 
 .PHONY: all
-all: $(MAINFILE).dvi $(MAINFILE).pdf
+all: $(MAINFILE).pdf
 	-$(OPEN_PDF) $(MAINFILE).pdf
-
-$(MAINFILE).dvi: $(DRAWS_FILES) $(AIPS_FILES) $(PYTHON_FILES) $(TESTS) $(EXTRA_FILES)
-	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
-	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 
 $(MAINFILE).pdf: $(DRAWS_FILES) $(AIPS_FILES) $(PYTHON_FILES) $(TESTS) $(EXTRA_FILES)
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 	
-.SECONDEXPANSION:
-
-make/%.t: %.tex | $$(@D)/
+# The stamp directories are created inside the recipes (instead of via
+# order-only `%/` prerequisites) because GNU Make 3.81 strips the trailing slash.
+make/%.t: %.tex
+	@mkdir -p $(@D)
 	@touch $@
 
-make/%.s: %.sty | $$(@D)/
+make/%.s: %.sty
+	@mkdir -p $(@D)
 	@touch $@
 
-make/%.c: %.cls | $$(@D)/
+make/%.c: %.cls
+	@mkdir -p $(@D)
 	@touch $@
 
-make/bib: $(BIB) | $$(@D)/
+make/bib: $(BIB)
+	@mkdir -p $(@D)
 	$(LATEX) $(LATEX_FLAGS) $(MAINFILE)
 	$(BIBTEX) $(MAINFILE)
 	@touch $@
-
-%/:
-	@mkdir -p $@
 
 %.drawpic: %.drawio
 	$(DRAWIO) $(DRAWIO_FLAGS) $< -o $@
@@ -99,7 +96,10 @@ make/bib: $(BIB) | $$(@D)/
 	$(GS) $(AIGS_FLAGS) -sOutputFile=$@ $<
 	cp $@ $(addsuffix .pdf, $(basename $<))
 
-images/%.pdf images/%.svg &: python/%.py python/requirements.txt $(wildcard python/*.json) | images/
+# A pattern rule with several targets is already treated as grouped, so no `&:`
+# is needed (which also keeps this working with the GNU Make 3.81 shipped on macOS).
+images/%.pdf images/%.svg: python/%.py python/requirements.txt $(wildcard python/*.json)
+	@mkdir -p images
 	@cd python && bash run.sh $*.py
 
 .PHONY: python aipics
@@ -122,7 +122,9 @@ clean:
 distclean: clean
 	-rm -f *.pdf
 	-rm -f *.ps
-	-rm -f *.dvi
+	-rm -f *.dvi *.xdv
 	-rm -f *.synctex.gz
 	-rm -f drawio/*.drawpic drawio/*.pdf
-	-rm -fr make
+	-rm -f ai/*.aipic ai/*.pdf
+	-rm -f $(PYTHON_FILES)
+	-rm -fr make python/venv
