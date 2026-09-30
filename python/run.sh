@@ -1,17 +1,15 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
+# Create the virtual environment only once and reuse it afterwards.
 if [ ! -d "venv" ]; then
-    mkdir venv
+    echo "Creating virtual environment..."
+    python3 -m venv venv || exit 1
 fi
-
-echo "Creating virtual environment..."
-
-python3 -m venv venv
 source venv/bin/activate
 
-# install requirements
+# install requirements (a no-op when they are already satisfied)
 if command -v pip3 &>/dev/null; then
-    pip3 install -r requirements.txt
+    pip3 install -r requirements.txt || exit 1
 else
     echo "No pip3 found."
     exit 1
@@ -39,7 +37,7 @@ do
     fi
 
     echo "Running $file..."
-    python3 "$file" quiet savepdf savesvg
+    python3 "$file" quiet savepdf savesvg || exit 1
 done
 
 # deactivate virtual environment
