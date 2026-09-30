@@ -59,7 +59,7 @@ jobs:
         run: make python
 
       - name: Compile LaTeX document
-        uses: xu-cheng/latex-action@4.0.0
+        uses: xu-cheng/latex-action@4.1.0
         with:
           root_file: ${{ env.MAINFILE }}.tex
           latexmk_use_xelatex: true
