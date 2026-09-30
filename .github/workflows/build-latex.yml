@@ -43,7 +43,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Build drawio
-        uses: rlespinasse/drawio-export-action@97446a4e70fb02ea837963aeab0508ab6daae3e9 # v2.38.0
+        uses: rlespinasse/drawio-export-action@711aa4f0ebbee18099c3ed8911819128b23eee21 # v2.54.1
         with:
           action-mode: all
           remove-page-suffix: true
