@@ -9,11 +9,21 @@ on:
     branches: [ master ]
   workflow_dispatch:
 
+# Least privilege by default; jobs that need more (Pages / Release) ask for it.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MAINFILE: paper
+
 jobs:
-  build_release_latex:
-    runs-on: ubuntu-22.04
-    env:
-      MAINFILE: paper
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
         with:
@@ -33,7 +43,7 @@ jobs:
             ${{ runner.os }}-pip-
 
       - name: Build drawio
-        uses: rlespinasse/drawio-export-action@v2.38.0
+        uses: rlespinasse/drawio-export-action@v2.54.1
         with:
           action-mode: all
           remove-page-suffix: true
@@ -51,11 +61,21 @@ jobs:
       - name: Compile LaTeX document
         uses: xu-cheng/latex-action@4.0.0
         with:
-          root_file: ${{env.MAINFILE}}.tex
+          root_file: ${{ env.MAINFILE }}.tex
           latexmk_use_xelatex: true
           latexmk_shell_escape: true
           args: "-synctex=1 -interaction=nonstopmode -file-line-error"
           post_compile: "chmod -R 777 ."
+
+      - name: Upload LaTeX logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.MAINFILE }}-logs
+          path: |
+            *.log
+            *.blg
+          if-no-files-found: ignore
 
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
@@ -63,47 +83,61 @@ jobs:
           name: ${{ env.MAINFILE }}-pdf
           path: ${{ env.MAINFILE }}.pdf
           if-no-files-found: error
-          
-      - name: Stash PDF
+
+      # Only the PDF (plus a redirecting index) is published, never the sources.
+      - name: Prepare GitHub Pages site
+        if: github.ref == 'refs/heads/master'
         run: |
-          mv ${{env.MAINFILE}}.pdf $HOME # cache the file
-          
-      - name: Create Branch
-        uses: peterjgrainger/action-create-branch@v3.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          mkdir site
+          cp "${MAINFILE}.pdf" site/
+          cat > site/index.html <<EOF
+          <!doctype html>
+          <meta charset="utf-8">
+          <meta http-equiv="refresh" content="0; url=${MAINFILE}.pdf">
+          <title>${MAINFILE}.pdf</title>
+          <a href="${MAINFILE}.pdf">${MAINFILE}.pdf</a>
+          EOF
+
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/master'
+        uses: actions/upload-pages-artifact@v3
         with:
-          branch: gh_actions_builds
-          
-      - name: Checkout gh_actions_builds Branch
-        uses: actions/checkout@v5
+          path: site
+
+  deploy-pages:
+    needs: build
+    # Never on pull requests or tags: only the master branch is published.
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download PDF artifact
+        uses: actions/download-artifact@v4
         with:
-          fetch-depth: 1
-          ref: gh_actions_builds
-          
-      - name: Commit PDF
-        env:
-          COMMITTER_EMAIL: ${{ github.event.head_commit.committer.email || '41898282+github-actions[bot]@users.noreply.github.com' }}
-          COMMITTER_NAME: ${{ github.event.head_commit.committer.name || 'github-actions[bot]' }}
-          SOURCE_COMMIT_MESSAGE: ${{ github.event.head_commit.message || format('Build PDF from {0}', github.sha) }}
-        run: |
-          git config --local user.email "$COMMITTER_EMAIL"
-          git config --local user.name "$COMMITTER_NAME"
-          mv "$HOME/${MAINFILE}.pdf" . # bring it back
-          git add -f "${MAINFILE}.pdf"
-          git commit -m "Updated by GitHub Action Automatically" -m "$SOURCE_COMMIT_MESSAGE" -m "Commit-from: $GITHUB_SHA"
-          
-      - name: Push PDF
-        uses: ad-m/github-push-action@v1.0.0
-        with: 
-          branch: gh_actions_builds 
-          force: true
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-  
+          name: ${{ env.MAINFILE }}-pdf
+
       - name: Release
         uses: softprops/action-gh-release@v2.4.1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: ${{env.MAINFILE}}.pdf
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: ${{ env.MAINFILE }}.pdf
