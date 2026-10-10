@@ -295,6 +295,7 @@ TSWLatexianTemp*
 # End of https://www.toptal.com/developers/gitignore/api/latex
 
 make/
+python/venv/
 .vscode
 
 */__pycache__/

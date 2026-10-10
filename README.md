@@ -55,6 +55,11 @@ When you have some python scripts to run, you can put them in the folder `python
 Usually, the folder `python` contains the scripts for data processing and data visualization (matplotlib).
 More details can be found in the `python/` row of the [folder structure](#folder-structure) table.
 
+The Python helper supports macOS's default Bash 3.2 and Linux Bash. It invokes
+the local virtual environment's interpreter directly and uses a headless
+Matplotlib backend. Empty script directories succeed; installation and script
+failures stop the build. Each platform creates its own ignored `python/venv/`.
+
 Also you can use other commands to clean up the intermediate files:
 
 - `make clean`: Clean up the intermediate files generated during the compilation process.
