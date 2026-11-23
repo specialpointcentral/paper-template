@@ -3,6 +3,49 @@
 Focus on writing, not getting stuck on how to compile and share.
 > You can find some of the introductions in this [Slide](https://blog.spcsky.com/graduate-share/share.html#/%E6%8E%A8%E9%94%80%E7%8E%AF%E8%8A%82) (Chinese only).
 
+## Init
+
+1. Create your paper repository with GitHub's **Use this template**, clone it, and open the clone in your agent. Keep the repository private while working on an unpublished or anonymous draft, and review the publishing workflow before enabling it.
+2. Say **“初始化论文项目”** or **“Initialize this paper project”**. On a new repository, the agent can also offer setup when you first ask it to start or plan the paper. Share any details you already know in the first message. For example, “初始化论文项目，主题是缓存隔离，目标是 EuroSys 2027，具体 track 待定。”
+3. The agent asks for the missing basics, fills in [Paper project](#paper-project), and saves the setup status and any lasting writing preferences in [AGENTS.md](AGENTS.md). `TBD` is fine. Say **“先跳过初始化”** to work without the setup conversation.
+
+Once configured, new sessions use the saved brief. To change it later, say **“重新配置”** or specify a change directly, for example **“重新配置，目标会议改为 EuroSys 2027”**. The agent keeps other confirmed details and revisits submission rules that depend on the old target. You can also fill in the brief and set the status to `configured` in `AGENTS.md` by hand.
+
+`AGENTS.md` contains the shared instructions. `CLAUDE.md` is a relative symlink to it. Edit `AGENTS.md` directly. Setup runs in the conversation when the agent reads these instructions.
+
+## Paper project
+
+| Field | Value |
+| --- | --- |
+| Working title or topic | TBD |
+| Research question or one-sentence goal | TBD |
+| Target venue and edition/year | TBD |
+| Track and submission phase | TBD |
+| Manuscript stage and language | TBD |
+| Official CFP or author instructions | TBD |
+| Verified submission rules | TBD |
+| Manuscript entry point and bibliography | `paper.tex`, `ref.bib` (template defaults) |
+| Draft, experiment results, or figure source paths | TBD |
+
+## Recommended skills
+
+| Skill | Use it for |
+| --- | --- |
+| [`systems-paper-writing`](https://github.com/Orchestra-Research/AI-Research-SKILLs/tree/main/20-ml-paper-writing/systems-paper-writing) | Systems-paper structure, paragraph planning, contribution framing, and evaluation design. |
+| [`academic-research-suite`](https://github.com/Imbad0202/academic-research-skills-codex) | Literature review, citation checks, experiment planning, manuscript review, and revision. |
+
+**Codex.** If you use the [skills CLI](https://github.com/vercel-labs/skills), install the systems writing skill with:
+
+```sh
+npx skills add Orchestra-Research/AI-Research-SKILLs --skill systems-paper-writing -a codex -g
+```
+
+Install `academic-research-suite` with the [ARS-Codex plugin or direct skill instructions](https://github.com/Imbad0202/academic-research-skills-codex#direct-skill-install-or-update). Open a new Codex conversation and invoke the skills as `$systems-paper-writing` or `$academic-research-suite` when needed.
+
+**Claude Code.** Use the same systems-writing install command with `-a claude-code` in place of `-a codex`. For ARS, follow the [upstream Claude Code installation guide](https://github.com/Imbad0202/academic-research-skills#quick-install).
+
+Project setup works without either skill. Install them separately when you want the corresponding writing or research workflows.
+
 ## Background
 
 If you have struggled with any of these situations:
@@ -27,6 +70,8 @@ If you have struggled with any of these situations:
 
 > Note: No repository-wide read/write workflow permission is needed. The workflow declares its own least-privilege `permissions`. Pull requests are compiled but never published, and only the PDF (not the sources) is deployed to Pages. If a build fails, the LaTeX logs are uploaded as the `paper-logs` artifact.
 
+See the [commit and paper submission rules](AGENTS.md#commits-and-paper-submissions) for authorship, AI disclosure, and pre-submission checks.
+
 ## How to build locally
 
 There are two ways to build locally (in linux, macos, or wsl in windows):
@@ -39,7 +84,7 @@ Before building, install the basic dependencies:
 - `ghostscript` (for Adobe Illustrator `.ai` figure conversion)
 - `drawio` (only needed when building local `.drawio` diagrams)
 
-- Use `latexmk` to build locally.
+- Use `latexmk` to build locally. On a fresh clone, run `make python` first to generate the sample figure `images/template.pdf`. Regenerate any changed figure inputs before rebuilding.
   - `latexmk -xelatex -outdir=build paper.tex`
 - Use `make` to build locally (**Recommend**).
   - `make`
